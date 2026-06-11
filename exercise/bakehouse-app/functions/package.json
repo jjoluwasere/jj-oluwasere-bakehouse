@@ -11,7 +11,9 @@
     "license": "ISC",
     "description": "",
     "dependencies": {
+        "@aws-sdk/client-dynamodb": "^3.1060.0",
         "@aws-sdk/client-s3": "^3.1055.0",
+        "@aws-sdk/lib-dynamodb": "^3.1060.0",
         "data-api-client": "^2.2.0",
         "pdf-lib": "^1.17.1"
     }
