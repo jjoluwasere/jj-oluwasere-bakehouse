@@ -1,0 +1,133 @@
+name: Deploy Bakehouse
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  BAKEHOUSE_STACK_NAME: ${{ vars.BAKEHOUSE_STACK_NAME || 'Jj-Oluwasere-Bakehouse' }}
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-2' }}
+  AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+  EXPECTED_ROLE_NAME: ${{ vars.EXPECTED_ROLE_NAME || 'github-actions-jj-oluwasere-bakehouse' }}
+  APP_BASE_URL: ${{ vars.APP_BASE_URL || 'https://jj-oluwasere-bakehouse.cta-training.academy' }}
+  TEST_ROUTES: ${{ vars.TEST_ROUTES || '/,/health' }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+defaults:
+  run:
+    working-directory: exercise/bakehouse-app
+
+jobs:
+  deploy:
+    name: Deploy CDK stack and run k6 tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate GitHub Actions variables
+        shell: bash
+        run: |
+          : "${AWS_ROLE_ARN:?Missing AWS_ROLE_ARN. Add it as a GitHub Actions secret.}"
+          : "${AWS_ACCOUNT_ID:?Missing AWS_ACCOUNT_ID. Add it as a GitHub Actions variable.}"
+          : "${AWS_REGION:?Missing AWS_REGION. Add it as a GitHub Actions variable.}"
+          : "${BAKEHOUSE_STACK_NAME:?Missing BAKEHOUSE_STACK_NAME. Add it as a GitHub Actions variable.}"
+          : "${APP_BASE_URL:?Missing APP_BASE_URL. Add it as a GitHub Actions variable.}"
+
+          echo "Stack name: ${BAKEHOUSE_STACK_NAME}"
+          echo "AWS region: ${AWS_REGION}"
+          echo "App URL: ${APP_BASE_URL}"
+          echo "Expected role name: ${EXPECTED_ROLE_NAME}"
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4.1.0
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: gha-cdk-jj-oluwasere-${{ github.run_id }}-${{ github.run_attempt }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS identity
+        shell: bash
+        run: |
+          IDENTITY="$(aws sts get-caller-identity)"
+          echo "${IDENTITY}" | jq '.'
+
+          ACTUAL_ACCOUNT="$(echo "${IDENTITY}" | jq -r '.Account')"
+          CALLER_ARN="$(echo "${IDENTITY}" | jq -r '.Arn')"
+
+          if [ "${ACTUAL_ACCOUNT}" != "${AWS_ACCOUNT_ID}" ]; then
+            echo "::error::Expected AWS account ${AWS_ACCOUNT_ID}, but got ${ACTUAL_ACCOUNT}"
+            exit 1
+          fi
+
+          if [[ "${CALLER_ARN}" != *":assumed-role/${EXPECTED_ROLE_NAME}/"* ]]; then
+            echo "::error::Expected role ${EXPECTED_ROLE_NAME}, but got ${CALLER_ARN}"
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            exercise/bakehouse-app/package-lock.json
+            exercise/bakehouse-app/client/package-lock.json
+            exercise/bakehouse-app/functions/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install client dependencies
+        run: npm ci --prefix client
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      - name: Build client assets
+        run: npm run build --prefix client
+        env:
+          VITE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
+
+      - name: CDK synth
+        run: npx cdk synth
+        env:
+          BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+
+      - name: CDK deploy
+        run: npx cdk deploy "${BAKEHOUSE_STACK_NAME}" --require-approval never
+        env:
+          BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run k6 smoke test
+        run: k6 run k6/smoke.js
+        env:
+          BASE_URL: ${{ env.APP_BASE_URL }}
+          TEST_ROUTES: ${{ env.TEST_ROUTES }}
+
+      - name: Run k6 load test manually only
+        if: github.event_name == 'workflow_dispatch'
+        run: k6 run k6/load.js
+        env:
+          BASE_URL: ${{ env.APP_BASE_URL }}
+          TEST_ROUTES: ${{ env.TEST_ROUTES }}
+
+      - name: Print deployed URL
+        run: |
+          echo "Deployment complete"
+          echo "${APP_BASE_U
