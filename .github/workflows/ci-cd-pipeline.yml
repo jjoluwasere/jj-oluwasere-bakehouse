@@ -115,13 +115,30 @@ jobs:
       - name: CDK deploy
         run: |
             aws sts get-caller-identity
-            npx cdk deploy "${BAKEHOUSE_STACK_NAME}-stack" --require-approval never
+
+            mkdir -p ~/.aws
+
+            cat > ~/.aws/credentials <<EOF
+            [github-actions]
+            aws_access_key_id=${AWS_ACCESS_KEY_ID}
+            aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}
+            aws_session_token=${AWS_SESSION_TOKEN}
+                
+            EOF
+            cat > ~/.aws/config <<EOF
+            [profile github-actions]
+            region=${AWS_REGION}
+            output=json
+            EOF
+
+            AWS_PROFILE=github-actions npx cdk deploy "${BAKEHOUSE_STACK_NAME}-stack" --require-approval never
         env:
-          BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
-          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ env.AWS_REGION }}
-          CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
-          CDK_DEFAULT_REGION: ${{ env.AWS_REGION || 'eu-west-2' }}
+            BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
+            AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+            AWS_REGION: ${{ env.AWS_REGION }}
+            AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+            CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
+            CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
 
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
