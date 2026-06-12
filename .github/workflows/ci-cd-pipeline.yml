@@ -135,7 +135,7 @@ jobs:
             AWS_PROFILE=github-actions aws sts get-caller-identity
 
             echo "Deploying CDK"
-            AWS_PROFILE=github-actions AWS_SDK_LOAD_CONFIG=1 npx cdk deploy "${BAKEHOUSE_STACK_NAME}-stack" --require-approval never
+            npx cdk deploy "${BAKEHOUSE_STACK_NAME}-stack" --require-approval never --profile github-actions
 
         env:
             BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
