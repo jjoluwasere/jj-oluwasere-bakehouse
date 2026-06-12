@@ -131,7 +131,12 @@ jobs:
             output=json
             EOF
 
-            AWS_PROFILE=github-actions npx cdk deploy "${BAKEHOUSE_STACK_NAME}-stack" --require-approval never
+            echo "Testing AWS profile"
+            AWS_PROFILE=github-actions aws sts get-caller-identity
+
+            echo "Deploying CDK"
+            AWS_PROFILE=github-actions AWS_SDK_LOAD_CONFIG=1 npx cdk deploy "${BAKEHOUSE_STACK_NAME}-stack" --require-approval never
+
         env:
             BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
             AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
