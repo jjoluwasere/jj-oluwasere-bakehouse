@@ -14,6 +14,8 @@ env:
   BAKEHOUSE_STACK_NAME: 'Jj-Oluwasere-Bakehouse'
   AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-2' }}
+  CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+  CDK_DEFAULT_REGION: ${{ vars.AWS_REGION || 'eu-west-2' }}
   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
   EXPECTED_ROLE_NAME: ${{ vars.EXPECTED_ROLE_NAME || 'github-actions-jj-oluwasere-bakehouse' }}
   APP_BASE_URL: ${{ vars.APP_BASE_URL || 'https://jj-oluwasere-bakehouse.cta-training.academy' }}
@@ -107,6 +109,8 @@ jobs:
           BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ env.AWS_REGION }}
+          CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ env.AWS_REGION || 'eu-west-2' }}
 
       - name: CDK deploy
         run: npx cdk deploy "${BAKEHOUSE_STACK_NAME}-stack" --require-approval never
@@ -114,6 +118,8 @@ jobs:
           BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ env.AWS_REGION }}
+          CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ env.AWS_REGION || 'eu-west-2' }}
 
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
