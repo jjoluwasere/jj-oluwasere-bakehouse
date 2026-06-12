@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 env:
-  BAKEHOUSE_STACK_NAME: ${{ vars.BAKEHOUSE_STACK_NAME || 'Jj-Oluwasere-Bakehouse' }}
+  BAKEHOUSE_STACK_NAME: 'Jj-Oluwasere-Bakehouse-stack'
   AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-2' }}
   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
