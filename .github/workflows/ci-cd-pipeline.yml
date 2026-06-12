@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 env:
-  BAKEHOUSE_STACK_NAME: 'Jj-Oluwasere-Bakehouse-stack'
+  BAKEHOUSE_STACK_NAME: 'Jj-Oluwasere-Bakehouse'
   AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-2' }}
   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -109,7 +109,7 @@ jobs:
           AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: CDK deploy
-        run: npx cdk deploy "${BAKEHOUSE_STACK_NAME}" --require-approval never
+        run: npx cdk deploy "${BAKEHOUSE_STACK_NAME}-stack" --require-approval never
         env:
           BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
