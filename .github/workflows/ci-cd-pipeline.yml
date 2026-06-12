@@ -87,10 +87,14 @@ jobs:
         run: npm ci
 
       - name: Install client dependencies
-        run: npm ci --prefix client
+        run: |
+            cd client
+            npm ci
 
       - name: Install function dependencies
-        run: npm ci --prefix functions
+        run: |
+            cd functions
+            npm ci
 
       - name: Build client assets
         run: npm run build --prefix client
