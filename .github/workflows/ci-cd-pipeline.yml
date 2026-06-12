@@ -113,7 +113,9 @@ jobs:
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION || 'eu-west-2' }}
 
       - name: CDK deploy
-        run: npx cdk deploy "${BAKEHOUSE_STACK_NAME}-stack" --require-approval never
+        run: |
+            aws sts get-caller-identity
+            npx cdk deploy "${BAKEHOUSE_STACK_NAME}-stack" --require-approval never
         env:
           BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
