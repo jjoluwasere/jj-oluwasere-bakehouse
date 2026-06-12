@@ -11,8 +11,8 @@ if (!stackName || !stackName.trim()) {
 
 const settings = {
   env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT || process.env.CDK_DEFAULT_ACCOUNT ||'NOT_SET',
-    region: process.env.CDK_DEFAULT_REGION || process.env.CDK_DEFAULT_REGION ||'NOT_SET'
+    account: process.env.AWS_ACCOUNT_ID || process.env.CDK_DEFAULT_ACCOUNT ||'NOT_SET',
+    region: process.env.AWS_REGION || process.env.CDK_DEFAULT_REGION ||'eu-west-2'
   },
   stackName: stackName,
   certArn: cdk.Fn.importValue('CTASharedCertArn'), // SSL cert for HTTPS
